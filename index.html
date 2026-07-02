@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Pro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #3b1b1b;
+            color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            transition: background-color 0.5s ease;
+        }
+
+        /* --- CABECERA DINÁMICA --- */
+        .cabecera-principal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            font-size: 32px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .modo-estudio-header { color: #ff3d3d; }
+        .modo-descanso-header { color: #4fc3f7; }
+
+        .icono-cabecera {
+            font-size: 36px;
+            display: inline-block;
+        }
+
+        .contenedor-principal {
+            display: flex;
+            gap: 25px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .contenedor-principal {
+                flex-direction: column;
+            }
+        }
+
+        .panel {
+            background-color: #2d2d2d;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- PANEL IZQUIERDO --- */
+        .lista-config-rutina {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+            margin-top: 10px;
+        }
+
+        .renglon-ciclo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #3e3e42;
+            padding: 10px 15px;
+            border-radius: 8px;
+            position: relative;
+            transition: background-color 0.2s;
+            min-height: 32px;
+        }
+
+        .renglon-ciclo:hover { background-color: #4a4a4f; }
+        .info-lectura { display: flex; align-items: center; width: 100%; }
+        .tipo-display { font-weight: bold; width: 130px; }
+        .badge-estudio { color: #ff6b6b; }
+        .badge-descanso { color: #4fc3f7; }
+
+        .numero-lectura {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background: transparent;
+            border: none;
+            width: 40px;
+            text-align: right;
+        }
+
+        .etiqueta-min { font-size: 13px; color: #888; margin-left: 6px; }
+
+        .contenedor-edicion { display: flex; align-items: center; gap: 8px; width: 100%; }
+
+        .select-tipo, .input-tiempo-edit {
+            background-color: #252526;
+            border: 1px solid #555;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .input-tiempo-edit { width: 45px; text-align: center; }
+
+        .acciones-hover {
+            display: none;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .renglon-ciclo:hover .acciones-hover { display: flex; }
+
+        .btn-accion-item {
+            border: none;
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+        .btn-item-editar { background-color: #0288d1; }
+        .btn-item-eliminar { background-color: #d32f2f; }
+        .btn-item-guardar { background-color: #388e3c; }
+
+        .btn-agregar-mas {
+            background-color: #4fc3f7;
+            color: #1e1e1e;
+            border: none;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto 10px auto;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn-agregar-mas:hover { background-color: #81d4fa; transform: scale(1.1); }
+
+        /* --- PANEL DERECHO --- */
+        .pantalla-pomodoro { text-align: center; justify-content: space-between; }
+        .fase-actual-texto { font-size: 13px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        .estado-fase { font-size: 26px; font-weight: bold; text-transform: uppercase; color: #ffb74d; margin: 2px 0 10px 0; min-height: 35px; }
+        .fase-siguiente-texto { font-size: 16px; color: #e0e0e0; font-weight: 600; margin: 0 0 15px 0; background-color: #232325; padding: 6px; border-radius: 6px; display: inline-block; }
+
+        .temporizador {
+            font-size: 86px;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 10px 0 25px 0;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            letter-spacing: -2px;
+        }
+
+        .btn-control-principal {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-control-principal:hover { background-color: #45a049; }
+        .btn-reiniciar-fase { background-color: #fbc02d; color: #1e1e1e; margin-top: 10px; }
+        .btn-reiniciar-fase:hover { background-color: #f9a825; }
+
+        /* --- MENÚ DESPLEGABLE DE AJUSTES --- */
+        .btn-desplegar-ajustes {
+            background-color: #3e3e42;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 8px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .btn-desplegar-ajustes:hover { background-color: #4a4a4f; }
+
+        .contenedor-ajustes-alertas {
+            max-height: 0;
+            overflow: hidden;
+            background-color: #232325;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out, margin-top 0.3s ease-out;
+            padding: 0 12px;
+        }
+
+        /* Clase activa que se añade con JavaScript al abrir el menú */
+        .contenedor-ajustes-alertas.abierto {
+            max-height: 100px; /* Suficiente espacio para las opciones */
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .opcion-ajuste {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .opcion-ajuste input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .lista-vista-derecha {
+            margin-top: 20px;
+            background-color: #252526;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .lista-vista-derecha ol { margin: 0; padding-left: 20px; color: #aaa; }
+        .lista-vista-derecha li { margin-bottom: 8px; cursor: pointer; transition: color 0.2s; }
+        .lista-vista-derecha li:hover { color: #4fc3f7; }
+        .item-activo { color: #4fc3f7 !important; font-weight: bold; }
+
+        .btn-reiniciar { background-color: #555555; color: white; margin-top: 15px; }
+        .btn-reiniciar:hover { background-color: #444444; }
+    </style>
+</head>
+<body>
+
+    <div id="cabecera-app" class="cabecera-principal modo-estudio-header">
+        <span id="titulo-texto">Pomodoro</span>
+        <span id="icono-fase" class="icono-cabecera">🍅</span>
+    </div>
+
+    <div class="contenedor-principal">
+        
+        <!-- PANEL IZQUIERDO -->
+        <div class="panel">
+            <div id="contenedor-renglones" class="lista-config-rutina"></div>
+            <button class="btn-agregar-mas" onclick="crearNuevoRenglonDefecto()">+</button>
+            <button class="btn-control-principal btn-reiniciar" onclick="reiniciarTodo()">Resetear Todo</button>
+        </div>
+
+        <!-- PANEL DERECHO -->
+        <div class="panel pantalla-pomodoro">
+            <div class="cabecera-fases">
+                <p class="fase-actual-texto">Renglón Actual</p>
+                <div id="etiqueta-fase" class="estado-fase">-</div>
+                <div id="etiqueta-siguiente" class="fase-siguiente-texto">Siguiente: -</div>
+            </div>
+
+            <div id="pantalla-tiempo" class="temporizador">25:00</div>
+            
+            <button id="boton-accion" class="btn-control-principal" onclick="controlarCiclo()">Iniciar</button>
+            <button id="boton-reiniciar-fase" class="btn-control-principal btn-reiniciar-fase" onclick="reiniciarFaseActual()">Reiniciar</button>
+
+            <!-- BOTÓN COLA DESPLEGABLE -->
+            <button class="btn-desplegar-ajustes" onclick="alternarMenuAjustes()">⚙️ Opciones de Alerta <span id="flecha-ajustes">▼</span></button>
+
+            <!-- MENU DESPLEGABLE DE ALERTAS -->
+            <div id="menu-ajustes" class="contenedor-ajustes-alertas">
+                <div class="opcion-ajuste">
+                    <label for="chk-sonido">🔔 Activar sonido de Alarma</label>
+                    <input type="checkbox" id="chk-sonido" checked>
+                </div>
+                <div class="opcion-ajuste">
+                    <label for="chk-vibrar">📳 Habilitar Vibración (Celular)</label>
+                    <input type="checkbox" id="chk-vibrar" checked>
+                </div>
+            </div>
+
+            <div class="lista-vista-derecha">
+                <strong style="color: #fff; display: block; margin-bottom: 8px;">Progreso de la Rutina:</strong>
+                <ol id="lista-visual-derecha"></ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let rutina = [
+            { tipo: "estudio", tiempo: 25, editando: false },
+            { tipo: "descanso", tiempo: 5, editando: false },
+            { tipo: "estudio", tiempo: 15, editando: false },
+            { tipo: "descanso", tiempo: 10, editando: false }
+        ];
+
+        let indiceActual = 0;
+        let tiempoRestante = 0;
+        let intervalo = null;
+        let enPausa = true;
+        let tiempoEsperadoFin = null;
+
+        const cabeceraApp = document.getElementById("cabecera-app");
+        const iconoFase = document.getElementById("icono-fase");
+        const contenedorRenglones = document.getElementById("contenedor-renglones");
+        const etiquetaFase = document.getElementById("etiqueta-fase");
+        const etiquetaSiguiente = document.getElementById("etiqueta-siguiente");
+        const pantallaTiempo = document.getElementById("pantalla-tiempo");
+        const botonAccion = document.getElementById("boton-accion");
+        const listaVisualDerecha = document.getElementById("lista-visual-derecha");
+        
+        const chkSonido = document.getElementById("chk-sonido");
+        const chkVibrar = document.getElementById("chk-vibrar");
+        const menuAjustes = document.getElementById("menu-ajustes");
+        const flechaAjustes = document.getElementById("flecha-ajustes");
+
+        if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        // --- FUNCIÓN PARA DESPLEGAR EL MENÚ ---
+        function alternarMenuAjustes() {
+            menuAjustes.classList.toggle("abierto");
+            if (menuAjustes.classList.contains("abierto")) {
+                flechaAjustes.textContent = "▲";
+            } else {
+                flechaAjustes.textContent = "▼";
+            }
+        }
+
+        // --- MANEJO DE SEGUNDO PLANO ---
+        document.addEventListener("visibilitychange", () => {
+            if (!enPausa && tiempoEsperadoFin) {
+                if (document.hidden) {
+                    clearInterval(intervalo);
+                } else {
+                    let ahora = Date.now();
+                    let diferencia = Math.round((tiempoEsperadoFin - ahora) / 1000);
+
+                    if (diferencia > 0) {
+                        tiempoRestante = diferencia;
+                        actualizarPantallaReloj();
+                        arrancarBucleIntervalo();
+                    } else {
+                        tiempoRestante = 0;
+                        actualizarPantallaReloj();
+                        finalizarFaseActual();
+                    }
+                }
+            }
+        });
+
+        function ejecutarAlertasFinFase(nombreFase) {
+            let textoAlerta = `¡El tiempo de la fase "${nombreFase}" ha terminado!`;
+
+            if (document.hidden && Notification.permission === "granted") {
+                new Notification("Pomodoro", { body: textoAlerta, icon: "🍅" });
+            }
+
+            if (chkSonido.checked) {
+                reproducirAlarma();
+            } else {
+                setTimeout(() => { alert(textoAlerta); }, 100);
+            }
+
+            if (chkVibrar.checked && navigator.vibrate) {
+                navigator.vibrate([400, 200, 400, 200, 400]);
+            }
+        }
+
+        function reproducirAlarma() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                let tiempos = [0, 0.2, 0.4];
+                tiempos.forEach(t => {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + t);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.15);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + t);
+                    osc.stop(ctx.currentTime + t + 0.15);
+                });
+            } catch (e) {
+                console.log("Audio bloqueado por el explorador.");
+            }
+        }
+
+        function actualizarEstiloCabecera() {
+            if (rutina.length === 0 || indiceActual >= rutina.length) {
+                cabeceraApp.className = "cabecera-principal modo-estudio-header";
+                document.body.style.backgroundColor = "#3b1b1b";
+                iconoFase.textContent = "🍅";
+                return;
+            }
+            const faseActual = rutina[indiceActual];
+            if (faseActual.tipo === "estudio") {
+                cabeceraApp.className = "cabecera-principal modo-estudio-header";
+                document.body.style.backgroundColor = "#3b1b1b";
+                iconoFase.textContent = "🍅";
+            } else {
+                cabeceraApp.className = "cabecera-principal modo-descanso-header";
+                document.body.style.backgroundColor = "#1b263b";
+                iconoFase.textContent = "🛏️💤";
+            }
+        }
+
+        function renderizarRenglones() {
+            contenedorRenglones.innerHTML = "";
+            rutina.forEach((item, index) => {
+                const divRenglon = document.createElement("div");
+                divRenglon.className = "renglon-ciclo";
+
+                if (!item.editando) {
+                    let claseBadge = item.tipo === "estudio" ? "badge-estudio" : "badge-descanso";
+                    let nombreTexto = item.tipo === "estudio" ? "Estudiar" : "Descanso";
+                    
+                    divRenglon.innerHTML = `
+                        <div class="info-lectura">
+                            <span class="tipo-display ${claseBadge}">${index + 1}. ${nombreTexto}</span>
+                            <span style="flex-grow: 1;"></span>
+                            <span class="numero-lectura">${item.tiempo}</span>
+                            <span class="etiqueta-min">min</span>
+                        </div>
+                        <div class="acciones-hover">
+                            <button class="btn-accion-item btn-item-editar" onclick="activarEdicion(${index})">Editar</button>
+                        </div>
+                    `;
+                } else {
+                    divRenglon.innerHTML = `
+                        <div class="contenedor-edicion">
+                            <span style="font-weight:bold;">${index + 1}.</span>
+                            <select class="select-tipo" id="edit-tipo-${index}">
+                                <option value="estudio" ${item.tipo === 'estudio' ? 'selected' : ''}>Estudiar</option>
+                                <option value="descanso" ${item.tipo === 'descanso' ? 'selected' : ''}>Descanso</option>
+                            </select>
+                            <input type="number" class="input-tiempo-edit" id="edit-tiempo-${index}" value="${item.tiempo}" min="1">
+                            <span class="etiqueta-min" style="margin-right: auto;">min</span>
+                            <button class="btn-accion-item btn-item-eliminar" onclick="eliminarRenglon(${index})">Eliminar</button>
+                            <button class="btn-accion-item btn-item-guardar" onclick="guardarEdicion(${index})">OK</button>
+                        </div>
+                    `;
+                }
+                contenedorRenglones.appendChild(divRenglon);
+            });
+            actualizarVistaDerecha();
+            actualizarCabecerasFase();
+            actualizarEstiloCabecera();
+        }
+
+        function crearNuevoRenglonDefecto() {
+            rutina.push({ tipo: "estudio", tiempo: 25, editando: false });
+            renderizarRenglones();
+            if (rutina.length === 1) prepararRelojFaseActual();
+        }
+
+        function eliminarRenglon(index) {
+            rutina.splice(index, 1);
+            if (index === indiceActual) {
+                forzarParadaReloj();
+            } else if (index < indiceActual && indiceActual > 0) {
+                indiceActual--;
+            }
+            renderizarRenglones();
+            prepararRelojFaseActual();
+        }
+
+        function activarEdicion(index) {
+            rutina[index].editando = true;
+            renderizarRenglones();
+        }
+
+        function guardarEdicion(index) {
+            const nuevoTipo = document.getElementById(`edit-tipo-${index}`).value;
+            const nuevoTiempo = parseInt(document.getElementById(`edit-tiempo-${index}`).value) || 5;
+            rutina[index].tipo = nuevoTipo;
+            rutina[index].tiempo = nuevoTiempo;
+            rutina[index].editando = false;
+            renderizarRenglones();
+            if (index === indiceActual && enPausa && tiempoRestante === 0) {
+                prepararRelojFaseActual();
+            }
+        }
+
+        function actualizarVistaDerecha() {
+            listaVisualDerecha.innerHTML = "";
+            rutina.forEach((item, index) => {
+                const li = document.createElement("li");
+                let nombreBonito = item.tipo === "estudio" ? "Estudiar" : "Descanso";
+                li.textContent = `${nombreBonito} (${item.tiempo} min)`;
+                li.onclick = () => saltarARenglon(index);
+                if (index === indiceActual && rutina.length > 0) {
+                    li.className = "item-activo";
+                    li.textContent += " ◀";
+                }
+                listaVisualDerecha.appendChild(li);
+            });
+        }
+
+        function saltarARenglon(index) {
+            clearInterval(intervalo);
+            enPausa = true;
+            indiceActual = index;
+            tiempoRestante = 0;
+            tiempoEsperadoFin = null;
+            botonAccion.textContent = "Iniciar";
+            botonAccion.style.backgroundColor = "#4caf50";
+            prepararRelojFaseActual();
+            actualizarVistaDerecha();
+            actualizarCabecerasFase();
+            actualizarEstiloCabecera();
+        }
+
+        function actualizarCabecerasFase() {
+            if (rutina.length === 0) {
+                etiquetaFase.textContent = "Sin pasos";
+                etiquetaSiguiente.textContent = "Siguiente: -";
+                return;
+            }
+            if (indiceActual >= rutina.length) {
+                etiquetaFase.textContent = "¡Completada!";
+                etiquetaSiguiente.textContent = "Siguiente: ¡Fin de la rutina!";
+                return;
+            }
+            const actual = rutina[indiceActual];
+            let textoActual = actual.tipo === "estudio" ? "Estudiar" : "Descanso";
+            etiquetaFase.textContent = `${indiceActual + 1}. ${textoActual}`;
+
+            if (indiceActual + 1 < rutina.length) {
+                const siguiente = rutina[indiceActual + 1];
+                let textoSiguiente = siguiente.tipo === "estudio" ? "Estudiar" : "Descanso";
+                etiquetaSiguiente.textContent = `Siguiente: ${indiceActual + 2}. ${textoSiguiente}`;
+            } else {
+                etiquetaSiguiente.textContent = "Siguiente: ¡Fin de la rutina!";
+            }
+        }
+
+        function prepararRelojFaseActual() {
+            if (rutina.length > 0 && tiempoRestante === 0 && indiceActual < rutina.length) {
+                const item = rutina[indiceActual];
+                pantallaTiempo.textContent = `${item.tiempo.toString().padStart(2, '0')}:00`;
+            } else if (rutina.length === 0 || indiceActual >= rutina.length) {
+                pantallaTiempo.textContent = "00:00";
+            }
+            actualizarCabecerasFase();
+        }
+
+        function forzarParadaReloj() {
+            clearInterval(intervalo);
+            tiempoRestante = 0;
+            tiempoEsperadoFin = null;
+            enPausa = true;
+            indiceActual = 0;
+            botonAccion.textContent = "Iniciar";
+            botonAccion.style.backgroundColor = "#4caf50";
+        }
+
+        function reiniciarTodo() {
+            clearInterval(intervalo);
+            rutina = [
+                { tipo: "estudio", tiempo: 25, editando: false },
+                { tipo: "descanso", tiempo: 5, editando: false },
+                { tipo: "estudio", tiempo: 15, editando: false },
+                { tipo: "descanso", tiempo: 10, editando: false }
+            ];
+            forzarParadaReloj();
+            renderizarRenglones();
+            prepararRelojFaseActual();
+        }
+
+        function reiniciarFaseActual() {
+            if (rutina.length === 0 || indiceActual >= rutina.length) return;
+            clearInterval(intervalo);
+            enPausa = true;
+            tiempoRestante = 0;
+            tiempoEsperadoFin = null;
+            botonAccion.textContent = "Iniciar";
+            botonAccion.style.backgroundColor = "#4caf50";
+            prepararRelojFaseActual();
+        }
+
+        function actualizarPantallaReloj() {
+            const mins = Math.floor(tiempoRestante / 60);
+            const secs = tiempoRestante % 60;
+            pantallaTiempo.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function arrancarBucleIntervalo() {
+            tiempoEsperadoFin = Date.now() + (tiempoRestante * 1000);
+
+            intervalo = setInterval(() => {
+                if (tiempoRestante > 0) {
+                    tiempoRestante--;
+                    actualizarPantallaReloj();
+                } else {
+                    finalizarFaseActual();
+                }
+            }, 1000);
+        }
+
+        function finalizarFaseActual() {
+            clearInterval(intervalo);
+            enPausa = true;
+            
+            let nombreFaseFinalizada = rutina[indiceActual] ? (rutina[indiceActual].tipo === "estudio" ? "Estudiar" : "Descanso") : "Pomodoro";
+            
+            botonAccion.textContent = "Siguiente Fase";
+            botonAccion.style.backgroundColor = "#4caf50";
+            
+            ejecutarAlertasFinFase(nombreFaseFinalizada);
+            
+            indiceActual++;
+            tiempoRestante = 0;
+            tiempoEsperadoFin = null;
+            
+            prepararRelojFaseActual();
+            actualizarVistaDerecha();
+            actualizarEstiloCabecera();
+        }
+
+        function controlarCiclo() {
+            if (rutina.length === 0) return;
+            if (indiceActual >= rutina.length) {
+                saltarARenglon(0);
+                return;
+            }
+
+            if (enPausa) {
+                const faseActual = rutina[indiceActual];
+                if (tiempoRestante === 0) {
+                    tiempoRestante = faseActual.tiempo * 60;
+                }
+
+                enPausa = false;
+                botonAccion.textContent = "Pausar";
+                botonAccion.style.backgroundColor = "#e53935";
+                actualizarCabecerasFase();
+                actualizarVistaDerecha();
+                actualizarEstiloCabecera();
+
+                arrancarBucleIntervalo();
+            } else {
+                clearInterval(intervalo);
+                enPausa = true;
+                botonAccion.textContent = "Reanudar";
+                botonAccion.style.backgroundColor = "#4caf50";
+            }
+        }
+
+        renderizarRenglones();
+        prepararRelojFaseActual();
+        actualizarEstiloCabecera();
+    </script>
+</body>
+</html>
